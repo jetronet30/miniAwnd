@@ -4,7 +4,7 @@ import shutil
 from datetime import datetime
 
 class ImageSaver:
-    def __init__(self, save_dir="nuber_sectors"):
+    def __init__(self, save_dir="number_sectors"):
         self.save_dir = save_dir
         self._setup_directory()
     
@@ -25,10 +25,10 @@ class ImageSaver:
             return None
         
         # რესაიზი 384x384-ზე
-        resized_crop = cv2.resize(crop, (384, 384), interpolation=cv2.INTER_AREA)
+        #resized_crop = cv2.resize(crop, (384, 384), interpolation=cv2.INTER_AREA)
         
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{self.save_dir}/{timestamp}_{name}_{confidence:.2f}.png"
-        cv2.imwrite(filename, resized_crop)
+        timestamp = datetime.now().strftime("%H%M%S")
+        filename = f"{self.save_dir}/{name}_{timestamp}_{confidence:.2f}.png"
+        cv2.imwrite(filename,crop)
         
         return filename
