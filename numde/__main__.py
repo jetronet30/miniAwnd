@@ -12,10 +12,15 @@ from .wagon_counter import WagonCounter
 from .camera_manager import CameraManager
 from .hls_streamer import HLSStreamer
 from .hls_server import start_hls_server
+from .tcp_client import TCPClient
 
 # ლოგირების კონფიგურაცია
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
 log = logging.getLogger("MAIN")
+
+# HTTP სერვერის ლოგების გათიშვა
+logging.getLogger("http.server").setLevel(logging.WARNING)
+logging.getLogger("socketserver").setLevel(logging.WARNING)
 
 # ────────────────────────────────────────────────
 
@@ -76,9 +81,76 @@ CAMERA_URL = "rtsp://admin:admin@192.168.1.11:554"
 DETECTION_INTERVAL = 0.1
 SAVE_EVERY_N_DETECTIONS = 1
 
+# TCP კლიენტის კონფიგურაცია
+TCP_HOST = "127.0.0.1"
+TCP_PORT = 9999
+REAL_WAGON_COUNT = 0
+
+
+# გლობალური ცვლადი დეტექციის სტატუსისთვის
+detection_enabled = False
+
 # კამერის მენეჯერის შექმნა
 camera_manager = CameraManager(CAMERA_URL)
 connection_screen = camera_manager.create_connection_screen()
+
+def on_detection_change(enabled: bool):
+    global detection_enabled
+    detection_enabled = enabled
+    status = "ჩართული" if enabled else "გამორთული"
+    log.info(f"🎯 დეტექციის სტატუსი შეიცვალა: {status}")
+    
+    # მხოლოდ დეტექციის დაწყებისას განვასუფთავთ
+    if enabled:
+        # ვაგონის ნომრის განულება
+        wagon_counter.reset()
+        log.info("🧹 ვაგონის ნომერი განულდა")
+        
+        # number_sectors ფაილების წაშლა
+        try:
+            import shutil
+            import time
+            
+            # ჯერ დავხუროთ ყველა ფაილი დირექტორიაში
+            if os.path.exists(SAVE_DIR):
+                for filename in os.listdir(SAVE_DIR):
+                    file_path = os.path.join(SAVE_DIR, filename)
+                    try:
+                        if os.path.isfile(file_path):
+                            os.chmod(file_path, 0o777)  # წვდომის უფლებების შეცვლა
+                            os.unlink(file_path)  # ფაილის წაშლა
+                    except Exception as file_error:
+                        log.warning(f"ფაილის წაშლის შეცდომა {filename}: {file_error}")
+                
+                # მოვიცადოთ ცოტა და წავშალოთ დირექტორია
+                time.sleep(0.1)
+                shutil.rmtree(SAVE_DIR, ignore_errors=True)
+                
+                # ხელახლა შევქმნათ დირექტორია
+                os.makedirs(SAVE_DIR, exist_ok=True)
+                log.info(f"🗑️ {SAVE_DIR} დირექტორია გასუფთავდა")
+            else:
+                os.makedirs(SAVE_DIR, exist_ok=True)
+                log.info(f"📁 {SAVE_DIR} დირექტორია შეიქმნა")
+                
+        except Exception as e:
+            log.error(f"ფაილების წაშლის შეცდომა: {e}")
+            # სცადოთ მაინც დირექტორიის შექმნა
+            try:
+                os.makedirs(SAVE_DIR, exist_ok=True)
+            except:
+                pass
+
+def on_wagon_count_change(wagon_count: int):
+    """ვაგონის რიცხვის შეცვლილება"""
+    global REAL_WAGON_COUNT
+    REAL_WAGON_COUNT = wagon_count
+    log.info(f"🔢 REAL_WAGON_COUNT განახლდა: {wagon_count}")
+
+tcp_client = TCPClient(TCP_HOST, TCP_PORT)
+tcp_client.set_detection_callback(on_detection_change)
+tcp_client.set_wagon_count_callback(on_wagon_count_change)
+tcp_client.start()
 
 print("იწყება. დააჭირე 'q'-ს გასაჩერებლად")
 print(f"HLS სტრიმი ხელმისაწვდომია: {hls_streamer.get_playlist_url()}")
@@ -133,7 +205,7 @@ while True:
 
     current_time = time.time()
 
-    if current_time - last_detect_time >= DETECTION_INTERVAL:
+    if current_time - last_detect_time >= DETECTION_INTERVAL and detection_enabled:
         try:
             results = model(frame, conf=MIN_CONFIDENCE, verbose=False, imgsz=640)[0]
             annotated = frame.copy()
@@ -181,10 +253,26 @@ while True:
         except Exception as e:
             print(f"YOLO error: {e}")
             last_annotated = frame.copy()
+    
+    # თუ დეტექცია გამორთულია, უნდა განვაახლდეთ უბრალო ფრეიმი
+    elif not detection_enabled and last_annotated is not None:
+        # გავასუფთაოთ ძველი ანოტაციები, რომ ვიდეო არ გაყინულიყო
+        last_annotated = None
 
     # ეკრანის არჩევა: თუ კამერა დაკავშირებულია - ნორმალური ეკრანი, თუ არა - connecting ეკრანი
     if camera_manager.get_status():
         display = last_annotated if last_annotated is not None else frame
+        
+        # დეტექციის სტატუსის ჩვენება ეკრანზე
+        status_text = "DETECTION: ON" if detection_enabled else "DETECTION: OFF"
+        status_color = (0, 255, 0) if detection_enabled else (0, 0, 255)
+        cv2.putText(display, status_text, (10, 30), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, status_color, 2)
+        cv2.putText(display, f"Process ID: {tcp_client.get_process_id()}", (10, 60), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        cv2.putText(display, f"Real Wagon Count: {REAL_WAGON_COUNT}", (10, 90), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+        
         # ფრეიმის გადაცემა HLS thread-სთვის (არა პირდაპირ სტრიმში)
         latest_display_frame = display.copy()
     else:
@@ -208,5 +296,8 @@ cv2.destroyAllWindows()
 
 # HLS სტრიმის გაჩერება
 hls_streamer.stop_stream()
+
+# TCP კლიენტის გათიშვა
+tcp_client.stop()
 
 print("პროგრამა დასრულდა.")

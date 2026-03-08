@@ -61,6 +61,7 @@ class HLSStreamer:
             # FFmpeg ბრძანება - ოპტიმიზირებული პარამეტრებით
             command = [
                 'ffmpeg',
+                '-loglevel', 'fatal',
                 '-y',  # არსებული ფაილების გადაწერა
                 '-re',  # real-time რეჟიმი
                 '-fflags', 'nobuffer+genpts',
@@ -136,7 +137,7 @@ class HLSStreamer:
             
         try:
             if frame is not None:
-                # BGR → YUV420P კონვერტაცია (მთავარი ცვლილება!)
+                # BGR → YUV420P კონვერტაცია (სწორი მეთოდი)
                 yuv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV_I420)
                 self.process.stdin.write(yuv_frame.tobytes())
                 self.process.stdin.flush()

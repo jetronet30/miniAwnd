@@ -12,11 +12,20 @@ import threading
 import logging
 from pathlib import Path
 
+# HTTP სერვერის ლოგების სრულიად გათიშვა
+logging.getLogger("http.server").setLevel(logging.ERROR)
+logging.getLogger("socketserver").setLevel(logging.ERROR)
+logging.getLogger("http.server.HTTPServer").setLevel(logging.ERROR)
+
 log = logging.getLogger("HLS_SERVER")
 
 class HLSHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory="hls", **kwargs)
+    
+    def log_message(self, format, *args):
+        """HTTP ლოგების გათიშვა"""
+        pass  # არ გამოიტანოს HTTP ლოგები
     
     def end_headers(self):
         # CORS headers დამატება
@@ -27,7 +36,7 @@ class HLSHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.endswith('.m3u8'):
             self.send_header('Content-Type', 'application/vnd.apple.mpegurl')
         elif self.path.endswith('.ts'):
-            self.send_header('Content-Type', 'video/mp2t')
+            self.send_header('Content-Type', 'video/MP2T')
         super().end_headers()
     
     def do_GET(self):
