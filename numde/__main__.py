@@ -13,6 +13,7 @@ from .camera_manager import CameraManager
 from .hls_streamer import HLSStreamer
 from .hls_server import start_hls_server
 from .tcp_client import TCPClient
+from .video_recorder import VideoRecorder
 
 # ლოგირების კონფიგურაცია
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
@@ -86,9 +87,11 @@ TCP_HOST = "127.0.0.1"
 TCP_PORT = 9999
 REAL_WAGON_COUNT = 0
 
-
 # გლობალური ცვლადი დეტექციის სტატუსისთვის
 detection_enabled = False
+
+# ვიდეო რეკორდერის შექმნა
+video_recorder = VideoRecorder(CAMERA_URL, "recordings")
 
 # კამერის მენეჯერის შექმნა
 camera_manager = CameraManager(CAMERA_URL)
@@ -99,6 +102,19 @@ def on_detection_change(enabled: bool):
     detection_enabled = enabled
     status = "ჩართული" if enabled else "გამორთული"
     log.info(f"🎯 დეტექციის სტატუსი შეიცვალა: {status}")
+    
+    # ვიდეოს ჩაწერის მართვა
+    if enabled:
+        # ჩავრთოთ ჩაწერა დეტექციის დაწყებისას
+        process_id = tcp_client.get_process_id()
+        if process_id and process_id != "არაა მიღებული":
+            video_recorder.start_recording(process_id)
+            log.info(f"🎥 ვიდეოს ჩაწერა დაიწყო ID-ით: {process_id}")
+    else:
+        # გავაჩეროთ ჩაწერა
+        if video_recorder.get_status()["is_recording"]:
+            video_recorder.stop_recording()
+            log.info("🛑 ვიდეოს ჩაწერა გაჩერდა")
     
     # მხოლოდ დეტექციის დაწყებისას განვასუფთავთ
     if enabled:
@@ -273,6 +289,21 @@ while True:
         cv2.putText(display, f"Real Wagon Count: {REAL_WAGON_COUNT}", (10, 90), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
         
+        # ვიდეოს ჩაწერის სტატუსის ჩვენება
+        recording_status = video_recorder.get_status()
+        if recording_status["is_recording"]:
+            rec_text = f"REC: {recording_status['current_filename']}"
+            rec_color = (0, 0, 255)  # წითელი ჩაწერისთვის
+            cv2.putText(display, rec_text, (10, 120), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, rec_color, 2)
+            # წითელი წრე ჩაწერის ინდიკატორად
+            cv2.circle(display, (display.shape[1] - 30, 30), 8, rec_color, -1)
+        else:
+            rec_text = "REC: OFF"
+            rec_color = (100, 100, 100)  # ნაცრისფერი გამორთულისთვის
+            cv2.putText(display, rec_text, (10, 120), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, rec_color, 2)
+        
         # ფრეიმის გადაცემა HLS thread-სთვის (არა პირდაპირ სტრიმში)
         latest_display_frame = display.copy()
     else:
@@ -299,5 +330,10 @@ hls_streamer.stop_stream()
 
 # TCP კლიენტის გათიშვა
 tcp_client.stop()
+
+# ვიდეო რეკორდერის გათიშვა
+if video_recorder.get_status()["is_recording"]:
+    video_recorder.stop_recording()
+    log.info("🛑 ვიდეოს ჩაწერა გაჩერდა პროგრამის დასრულებისას")
 
 print("პროგრამა დასრულდა.")
