@@ -1,0 +1,20 @@
+
+
+შემოწმება:
+ffprobe -rtsp_transport tcp -i "rtsp://admin:admin@192.168.1.11:554" -select_streams v:0 -show_entries stream=codec_name,width,height,r_frame_rate,bit_rate -v quiet -of compact
+
+ffprobe rtsp://admin:admin@192.168.1.11:554
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+ჩაწერა:
+ffmpeg -rtsp_transport tcp -i "rtsp://admin:admin@192.168.1.11:554" -c:v libx265 -preset fast -crf 23 -tag:v hvc1 -movflags +faststart -y "recording.mp4"
+კომპრესია:
+ffmpeg -i "1.mp4" -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart "r1.mp4"
+
+ტესტი:
+ffmpeg -rtsp_transport tcp -i "rtsp://admin:admin@192.168.1.11:554" -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart -y "r1.mp4"
+
+სწრაფი:
+ffmpeg -rtsp_transport tcp -i "rtsp://admin:admin@192.168.1.11:554" -c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p -an -movflags +faststart -y "r1.mp4"

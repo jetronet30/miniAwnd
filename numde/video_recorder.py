@@ -54,7 +54,7 @@ class VideoRecorder:
 
         self.process_id = process_id
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.current_filename = f"1_{process_id}.mp4"
+        self.current_filename = f"1_{process_id}_{timestamp}.mp4"
         output_path = os.path.join(self.output_dir, self.current_filename)
 
         ffmpeg_cmd = [
@@ -65,11 +65,12 @@ class VideoRecorder:
             "-fflags", "+genpts+discardcorrupt",
             "-use_wallclock_as_timestamps", "1",
             "-i", self.rtsp_url,
-            "-c:v", "libx265",               # re-encode HEVC-ით — სწორი timestamps
-            "-preset", "fast",               # სწრაფი დამუშავება (შეგიძლია veryfast/ultrafast)
-            "-crf", "23",                    # ხარისხი (18-25 კარგი ბალანსია)
-            "-tag:v", "hvc1",                # Windows + web თავსებადობა
-            "-movflags", "+faststart",       # moov ატომი წინ — სწორი seeking
+            "-c:v", "libx264",               # შენი მოთხოვნა — H.264
+            "-preset", "veryfast",           # შენი მოთხოვნა
+            "-crf", "23",                    # შენი მოთხოვნა
+            "-pix_fmt", "yuv420p",           # შენი მოთხოვნა
+            "-tag:v", "avc1",                # H.264-ისთვის სტანდარტული tag
+            "-movflags", "+faststart",       # სწორი seeking-ისთვის
         ]
 
         if self.include_audio:
@@ -87,7 +88,7 @@ class VideoRecorder:
                 ffmpeg_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                stdin=subprocess.PIPE,           # საჭიროა 'q'-ს გაგზავნისთვის
+                stdin=subprocess.PIPE,
                 universal_newlines=True,
                 bufsize=1,
             )
@@ -121,11 +122,11 @@ class VideoRecorder:
         log.info(f"ჩაწერის გაჩერება: {self.current_filename}")
 
         try:
-            # Graceful stop — FFmpeg-ს ვაძლევთ შანსს სწორად დახუროს ფაილი
+            # Graceful stop
             if self.process.stdin:
                 self.process.stdin.write('q\n')
                 self.process.stdin.flush()
-                time.sleep(2.0)  # დრო muxer-ის დასრულებისთვის
+                time.sleep(2.0)
 
             self.process.terminate()
             try:
