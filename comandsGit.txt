@@ -1,0 +1,12 @@
+# ნახე commit hash-ები
+git log --oneline
+
+# დაბრუნება კონკრეტულ commit-ზე (მაგ: e4f5g6h)
+git reset --hard e4f5g6h
+
+# თუ უკვე გქონდა გაგზავნილი GitHub-ზე:
+git push --force
+
+
+# მაგალითი  
+git reset --hard f34c41d
