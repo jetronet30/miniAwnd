@@ -18,6 +18,9 @@ python -m numde
 
 
 
+
+
+
 pyinstaller --onefile --windowed --add-data "models/trocr-large-printed;models/trocr-large-printed" --add-data "best.pt;." -n "AWND_DUO" aw_6\__main__.py
 
 pyinstaller --onefile --add-data "models/trocr-large-printed;models/trocr-large-printed" --add-data "best.pt;." -n "AWND_DUO" aw_6\__main__.py

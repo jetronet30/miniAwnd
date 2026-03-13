@@ -78,13 +78,13 @@ def hls_streaming_thread():
 # HLS სტრიმერის შექმნა - ოპტიმალური პარამეტრებით
 hls_streamer = HLSStreamer(HLS_DIR, segment_duration=2, output_name="wagon_stream")
 
-CAMERA_URL = "rtsp://admin:admin@192.168.1.11:554"
+CAMERA_URL = "rtsp://admin:@192.168.1.12:554"
 DETECTION_INTERVAL = 0.1
 SAVE_EVERY_N_DETECTIONS = 1
 
 # TCP კლიენტის კონფიგურაცია
 TCP_HOST = "127.0.0.1"
-TCP_PORT = 9999
+TCP_PORT = 45000
 REAL_WAGON_COUNT = 0
 
 # გლობალური ცვლადი დეტექციის სტატუსისთვის
@@ -93,9 +93,19 @@ detection_enabled = False
 # ვიდეო რეკორდერის შექმნა
 video_recorder = VideoRecorder(CAMERA_URL, "recordings")
 
+# ფანჯრის ფიქსური ზომები
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720
+WINDOW_NAME = "YOLO Camera + Detection"
+
 # კამერის მენეჯერის შექმნა
 camera_manager = CameraManager(CAMERA_URL)
 connection_screen = camera_manager.create_connection_screen()
+
+# OpenCV ფანჯრის შექმნა ფიქსური ზომით
+cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
+cv2.resizeWindow(WINDOW_NAME, WINDOW_WIDTH, WINDOW_HEIGHT)
+cv2.moveWindow(WINDOW_NAME, 100, 100)  # პოზიციის დაყენება
 
 def on_detection_change(enabled: bool):
     global detection_enabled
@@ -196,6 +206,36 @@ last_detect_time = time.time()
 
 save_counter = 0
 
+def resize_frame_to_window(frame):
+    """ფრეიმის ზომის შეცვლა ფანჯრის ფიქსური ზომისთვის"""
+    try:
+        # შევინარჩუნოთ ასპექტის პროპორცია უკეთესი ხარისხისთვის
+        h, w = frame.shape[:2]
+        aspect_ratio = w / h
+        
+        if aspect_ratio > WINDOW_WIDTH / WINDOW_HEIGHT:
+            # ფართო ფრეიმი - შევზღუდოთ სიგანე
+            new_w = WINDOW_WIDTH
+            new_h = int(WINDOW_WIDTH / aspect_ratio)
+        else:
+            # მაღალი ფრეიმი - შევზღუდოთ სიმაღლე
+            new_h = WINDOW_HEIGHT
+            new_w = int(WINDOW_HEIGHT * aspect_ratio)
+        
+        # რეზიზირება და შავი ზოლების დამატება თუ სჭირდება
+        resized = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_AREA)
+        
+        # შავი ფონზე ცენტრირება
+        final_frame = np.zeros((WINDOW_HEIGHT, WINDOW_WIDTH, 3), dtype=np.uint8)
+        y_offset = (WINDOW_HEIGHT - new_h) // 2
+        x_offset = (WINDOW_WIDTH - new_w) // 2
+        final_frame[y_offset:y_offset+new_h, x_offset:x_offset+new_w] = resized
+        
+        return final_frame
+    except Exception as e:
+        print(f"ფრეიმის რეზიზირების შეცდომა: {e}")
+        return cv2.resize(frame, (WINDOW_WIDTH, WINDOW_HEIGHT))
+
 while True:
     loop_start = time.time()
     
@@ -203,7 +243,7 @@ while True:
     if not camera_manager.get_status():
         if not camera_manager.reconnect():
             # ეკრანის ჩვენება დაკავშირების მცდელობისას
-            cv2.imshow("YOLO Camera + Detection", connection_screen)
+            cv2.imshow(WINDOW_NAME, resize_frame_to_window(connection_screen))
             key = cv2.waitKey(1)
             if key == ord('q'):
                 break
@@ -213,7 +253,7 @@ while True:
     frame, success = camera_manager.read_frame()
     if not success:
         # ეკრანის ჩვენება რეკონექტის მცდელობისას
-        cv2.imshow("YOLO Camera + Detection", connection_screen)
+        cv2.imshow(WINDOW_NAME, resize_frame_to_window(connection_screen))
         key = cv2.waitKey(1)
         if key == ord('q'):
             break
@@ -310,7 +350,7 @@ while True:
         display = connection_screen
         latest_display_frame = display.copy()
         
-    cv2.imshow("YOLO Camera + Detection", display)
+    cv2.imshow(WINDOW_NAME, resize_frame_to_window(display))
 
     key = cv2.waitKey(1)
     if key == ord('q'):
