@@ -1,38 +1,10 @@
 {
-  "timestamp": "2026-03-14T21:48:50.893702",
-  "total_wagons": 4,
+  "total_wagons": 1,
   "wagons": [
     {
       "row": 1,
-      "recognized_number": "73157158",
-      "detections_count": 17,
-      "most_common_count": 17,
-      "quality": "17/17 (100.0%)",
-      "average_confidence": 0.854
-    },
-    {
-      "row": 2,
-      "recognized_number": "73157034",
-      "detections_count": 8,
-      "most_common_count": 8,
-      "quality": "8/8 (100.0%)",
-      "average_confidence": 0.777
-    },
-    {
-      "row": 3,
-      "recognized_number": "73157141",
-      "detections_count": 19,
-      "most_common_count": 19,
-      "quality": "19/19 (100.0%)",
-      "average_confidence": 0.831
-    },
-    {
-      "row": 4,
-      "recognized_number": "50758978",
-      "detections_count": 12,
-      "most_common_count": 9,
-      "quality": "9/12 (75.0%)",
-      "average_confidence": 0.722
+      "number": "76728088",
+      "quality": "97.6"
     }
   ]
 }

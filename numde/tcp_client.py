@@ -198,3 +198,25 @@ class TCPClient:
 
     def is_detection_enabled(self) -> bool:
         return self.detection_enabled
+
+    def send_results_to_server(self, results_data: dict):
+        """გზავნის OCR შედეგებს სერვერზე"""
+        if not self.socket or not self.process_id:
+            log.warning("Cannot send results - no connection or process ID")
+            return False
+
+        try:
+            import json
+            # შედეგების JSON-ში გადაყვანა
+            results_json = json.dumps(results_data, ensure_ascii=False)
+            
+            # მომზადება: RESULTS_ID=xxxx|JSON_DATA
+            message = f"ID={self.process_id}|{results_json}"
+            
+            self.socket.send(message.encode('utf-8'))
+            log.info(f"Results sent for ID {self.process_id}")
+            return True
+            
+        except Exception as e:
+            log.error(f"Failed to send results: {e}")
+            return False

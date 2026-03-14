@@ -14,6 +14,8 @@ from .hls_streamer import HLSStreamer
 from .hls_server import start_hls_server
 from .tcp_client import TCPClient
 from .video_recorder import VideoRecorder
+from .working_detector import WorkingNumberDetector
+import json
 
 # ლოგირების კონფიგურაცია
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
@@ -137,6 +139,10 @@ def on_detection_change(enabled: bool):
         if video_recorder.get_status()["is_recording"]:
             video_recorder.stop_recording()
             log.info("🛑 ვიდეოს ჩაწერა გაჩერდა")
+        
+        # STOP ბრძანების დროს გავუშვათ OCR დეტექტორი
+        log.info("🔍 OCR დეტექტორის გაშვება...")
+        run_ocr_detector()
     
     # მხოლოდ დეტექციის დაწყებისას განვასუფთავთ
     if enabled:
@@ -184,6 +190,30 @@ def on_wagon_count_change(wagon_count: int):
     global REAL_WAGON_COUNT
     REAL_WAGON_COUNT = wagon_count
     log.info(f"🔢 REAL_WAGON_COUNT განახლდა: {wagon_count}")
+
+def run_ocr_detector():
+    """OCR დეტექტორის გაშვება და შედეგების გაგზავნა სერვერზე"""
+    try:
+        # OCR დეტექტორის შექმნა და გაშვება
+        detector = WorkingNumberDetector()
+        detector.process_sectors(SAVE_DIR)
+        
+        # final_wagons.json ფაილის წაკითხვა
+        if os.path.exists("final_wagons.json"):
+            with open("final_wagons.json", "r", encoding="utf-8") as f:
+                final_results = json.load(f)
+            
+            # შედეგების გაგზავნა სერვერზე
+            success = tcp_client.send_results_to_server(final_results)
+            if success:
+                log.info("✅ OCR შედეგები გაგზავნილია სერვერზე")
+            else:
+                log.error("❌ OCR შედეგების გაგზავნა ჩავარდა")
+        else:
+            log.warning("⚠️ final_wagons.json ფაილი არ მოიძებნა")
+            
+    except Exception as e:
+        log.error(f"OCR დეტექტორის შეცდომა: {e}")
 
 tcp_client = TCPClient(TCP_HOST, TCP_PORT, TCP_IDENTIFIER)
 tcp_client.set_detection_callback(on_detection_change)
