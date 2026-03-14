@@ -1,30 +1,230 @@
 {
-  "timestamp": "2026-03-14T13:57:54.902826",
-  "total_wagons": 3,
+  "timestamp": "2026-03-14T14:19:04.798259",
+  "total_wagons": 28,
   "wagons": [
     {
       "row": 1,
-      "recognized_number": "84051214",
-      "detections_count": 4,
-      "most_common_count": 4,
-      "quality": "4/4 (100.0%)",
-      "average_confidence": 0.757
+      "recognized_number": "66198789",
+      "detections_count": 13,
+      "most_common_count": 11,
+      "quality": "11/13 (84.6%)",
+      "average_confidence": 0.808
     },
     {
       "row": 2,
-      "recognized_number": "55469258",
-      "detections_count": 7,
-      "most_common_count": 7,
-      "quality": "7/7 (100.0%)",
-      "average_confidence": 0.743
+      "recognized_number": "66142563",
+      "detections_count": 17,
+      "most_common_count": 17,
+      "quality": "17/17 (100.0%)",
+      "average_confidence": 0.75
     },
     {
       "row": 3,
-      "recognized_number": "64438211",
+      "recognized_number": "60828852",
+      "detections_count": 3,
+      "most_common_count": 3,
+      "quality": "3/3 (100.0%)",
+      "average_confidence": 0.713
+    },
+    {
+      "row": 4,
+      "recognized_number": "62615802",
+      "detections_count": 20,
+      "most_common_count": 19,
+      "quality": "19/20 (95.0%)",
+      "average_confidence": 0.843
+    },
+    {
+      "row": 5,
+      "recognized_number": "66176926",
+      "detections_count": 20,
+      "most_common_count": 20,
+      "quality": "20/20 (100.0%)",
+      "average_confidence": 0.78
+    },
+    {
+      "row": 6,
+      "recognized_number": "62619945",
+      "detections_count": 18,
+      "most_common_count": 18,
+      "quality": "18/18 (100.0%)",
+      "average_confidence": 0.794
+    },
+    {
+      "row": 7,
+      "recognized_number": "66120528",
+      "detections_count": 13,
+      "most_common_count": 13,
+      "quality": "13/13 (100.0%)",
+      "average_confidence": 0.745
+    },
+    {
+      "row": 8,
+      "recognized_number": "62225016",
+      "detections_count": 18,
+      "most_common_count": 18,
+      "quality": "18/18 (100.0%)",
+      "average_confidence": 0.836
+    },
+    {
+      "row": 9,
+      "recognized_number": "66122524",
+      "detections_count": 11,
+      "most_common_count": 11,
+      "quality": "11/11 (100.0%)",
+      "average_confidence": 0.765
+    },
+    {
+      "row": 10,
+      "recognized_number": "66201039",
+      "detections_count": 6,
+      "most_common_count": 6,
+      "quality": "6/6 (100.0%)",
+      "average_confidence": 0.843
+    },
+    {
+      "row": 11,
+      "recognized_number": "62409131",
+      "detections_count": 14,
+      "most_common_count": 14,
+      "quality": "14/14 (100.0%)",
+      "average_confidence": 0.821
+    },
+    {
+      "row": 12,
+      "recognized_number": "62616651",
       "detections_count": 2,
       "most_common_count": 2,
       "quality": "2/2 (100.0%)",
-      "average_confidence": 0.62
+      "average_confidence": 0.8
+    },
+    {
+      "row": 13,
+      "recognized_number": "62615539",
+      "detections_count": 12,
+      "most_common_count": 11,
+      "quality": "11/12 (91.7%)",
+      "average_confidence": 0.819
+    },
+    {
+      "row": 14,
+      "recognized_number": "62314273",
+      "detections_count": 18,
+      "most_common_count": 18,
+      "quality": "18/18 (100.0%)",
+      "average_confidence": 0.838
+    },
+    {
+      "row": 15,
+      "recognized_number": "66150319",
+      "detections_count": 11,
+      "most_common_count": 11,
+      "quality": "11/11 (100.0%)",
+      "average_confidence": 0.847
+    },
+    {
+      "row": 16,
+      "recognized_number": "66122722",
+      "detections_count": 15,
+      "most_common_count": 11,
+      "quality": "11/15 (73.3%)",
+      "average_confidence": 0.756
+    },
+    {
+      "row": 17,
+      "recognized_number": "66122649",
+      "detections_count": 19,
+      "most_common_count": 16,
+      "quality": "16/19 (84.2%)",
+      "average_confidence": 0.796
+    },
+    {
+      "row": 18,
+      "recognized_number": "66200957",
+      "detections_count": 19,
+      "most_common_count": 17,
+      "quality": "17/19 (89.5%)",
+      "average_confidence": 0.707
+    },
+    {
+      "row": 19,
+      "recognized_number": "66177023",
+      "detections_count": 20,
+      "most_common_count": 19,
+      "quality": "19/20 (95.0%)",
+      "average_confidence": 0.792
+    },
+    {
+      "row": 20,
+      "recognized_number": "62578281",
+      "detections_count": 10,
+      "most_common_count": 10,
+      "quality": "10/10 (100.0%)",
+      "average_confidence": 0.818
+    },
+    {
+      "row": 21,
+      "recognized_number": "62203161",
+      "detections_count": 9,
+      "most_common_count": 8,
+      "quality": "8/9 (88.9%)",
+      "average_confidence": 0.855
+    },
+    {
+      "row": 22,
+      "recognized_number": "62535133",
+      "detections_count": 18,
+      "most_common_count": 18,
+      "quality": "18/18 (100.0%)",
+      "average_confidence": 0.853
+    },
+    {
+      "row": 23,
+      "recognized_number": "66157439",
+      "detections_count": 9,
+      "most_common_count": 8,
+      "quality": "8/9 (88.9%)",
+      "average_confidence": 0.775
+    },
+    {
+      "row": 24,
+      "recognized_number": "62387182",
+      "detections_count": 11,
+      "most_common_count": 7,
+      "quality": "7/11 (63.6%)",
+      "average_confidence": 0.867
+    },
+    {
+      "row": 25,
+      "recognized_number": "62615547",
+      "detections_count": 8,
+      "most_common_count": 8,
+      "quality": "8/8 (100.0%)",
+      "average_confidence": 0.814
+    },
+    {
+      "row": 26,
+      "recognized_number": "66139445",
+      "detections_count": 3,
+      "most_common_count": 2,
+      "quality": "2/3 (66.7%)",
+      "average_confidence": 0.605
+    },
+    {
+      "row": 27,
+      "recognized_number": "66139437",
+      "detections_count": 8,
+      "most_common_count": 8,
+      "quality": "8/8 (100.0%)",
+      "average_confidence": 0.718
+    },
+    {
+      "row": 28,
+      "recognized_number": "66198813",
+      "detections_count": 13,
+      "most_common_count": 12,
+      "quality": "12/13 (92.3%)",
+      "average_confidence": 0.748
     }
   ]
 }
