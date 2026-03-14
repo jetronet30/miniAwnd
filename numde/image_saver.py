@@ -25,10 +25,10 @@ class ImageSaver:
             return None
         
         # რესაიზი 384x384-ზე
-        resized_crop = cv2.resize(crop, (384, 96), interpolation=cv2.INTER_AREA)
+        #resized_crop = cv2.resize(crop, (384, 96), interpolation=cv2.INTER_AREA)
         
         timestamp = datetime.now().strftime("%H%M%S")
         filename = f"{self.save_dir}/{name}_{timestamp}_{confidence:.2f}.png"
-        cv2.imwrite(filename,resized_crop)
+        cv2.imwrite(filename,crop)
         
         return filename
