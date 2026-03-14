@@ -1,46 +1,38 @@
 {
-  "timestamp": "2026-03-14T19:43:28.676300",
-  "total_wagons": 5,
+  "timestamp": "2026-03-14T21:48:50.893702",
+  "total_wagons": 4,
   "wagons": [
     {
       "row": 1,
-      "recognized_number": "76724913",
-      "detections_count": 30,
-      "most_common_count": 30,
-      "quality": "30/30 (100.0%)",
-      "average_confidence": 0.786
+      "recognized_number": "73157158",
+      "detections_count": 17,
+      "most_common_count": 17,
+      "quality": "17/17 (100.0%)",
+      "average_confidence": 0.854
     },
     {
       "row": 2,
-      "recognized_number": "76728088",
-      "detections_count": 24,
-      "most_common_count": 23,
-      "quality": "23/24 (95.8%)",
-      "average_confidence": 0.818
+      "recognized_number": "73157034",
+      "detections_count": 8,
+      "most_common_count": 8,
+      "quality": "8/8 (100.0%)",
+      "average_confidence": 0.777
     },
     {
       "row": 3,
-      "recognized_number": "76728104",
-      "detections_count": 23,
-      "most_common_count": 23,
-      "quality": "23/23 (100.0%)",
-      "average_confidence": 0.797
+      "recognized_number": "73157141",
+      "detections_count": 19,
+      "most_common_count": 19,
+      "quality": "19/19 (100.0%)",
+      "average_confidence": 0.831
     },
     {
       "row": 4,
-      "recognized_number": "76728252",
-      "detections_count": 32,
-      "most_common_count": 31,
-      "quality": "31/32 (96.9%)",
-      "average_confidence": 0.82
-    },
-    {
-      "row": 5,
-      "recognized_number": "76728286",
-      "detections_count": 31,
-      "most_common_count": 30,
-      "quality": "30/31 (96.8%)",
-      "average_confidence": 0.763
+      "recognized_number": "50758978",
+      "detections_count": 12,
+      "most_common_count": 9,
+      "quality": "9/12 (75.0%)",
+      "average_confidence": 0.722
     }
   ]
 }

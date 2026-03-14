@@ -83,7 +83,7 @@ DETECTION_INTERVAL = 0.1
 SAVE_EVERY_N_DETECTIONS = 1
 
 # TCP კლიენტის კონფიგურაცია
-TCP_IDENTIFIER = 0
+TCP_IDENTIFIER = 2
 TCP_HOST = "192.168.1.30"
 TCP_PORT = 45000
 REAL_WAGON_COUNT = 0
@@ -185,7 +185,7 @@ def on_wagon_count_change(wagon_count: int):
     REAL_WAGON_COUNT = wagon_count
     log.info(f"🔢 REAL_WAGON_COUNT განახლდა: {wagon_count}")
 
-tcp_client = TCPClient(TCP_HOST, TCP_PORT)
+tcp_client = TCPClient(TCP_HOST, TCP_PORT, TCP_IDENTIFIER)
 tcp_client.set_detection_callback(on_detection_change)
 tcp_client.set_wagon_count_callback(on_wagon_count_change)
 tcp_client.start()

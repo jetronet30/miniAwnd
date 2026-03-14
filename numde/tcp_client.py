@@ -9,10 +9,10 @@ from typing import Optional, Callable
 log = logging.getLogger("TCP_CLIENT")
 
 class TCPClient:
-    def __init__(self, host: str = "127.0.0.1", port: int = 45000):
+    def __init__(self, host: str = "127.0.0.1", port: int = 45000, identifier: int = 2):
         self.host = host
         self.port = port
-        self.identifier = 0                     # თქვენი TCP_IDENTIFIER = 0
+        self.identifier = identifier
         self.process_id: Optional[str] = None
         self.socket: Optional[socket.socket] = None
         self.running = False
