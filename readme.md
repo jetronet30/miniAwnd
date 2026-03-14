@@ -16,7 +16,7 @@ python -m numde.downloader
 python -m numde
 
 
-
+python working_detector.py
 
 
 

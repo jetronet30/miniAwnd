@@ -58,38 +58,38 @@ class HLSStreamer:
             return False
             
         try:
-            # FFmpeg ბრძანება - ოპტიმიზირებული პარამეტრებით
+            # FFmpeg ბრძანება - ციმციმის ასარიდაგან პარამეტრებით
             command = [
                 'ffmpeg',
-                '-loglevel', 'fatal',
+                '-loglevel', 'error',
                 '-y',  # არსებული ფაილების გადაწერა
                 '-re',  # real-time რეჟიმი
-                '-fflags', 'nobuffer+genpts',
+                '-fflags', 'nobuffer+genpts+discardcorrupt',
                 '-flags', 'low_delay',
-                '-thread_queue_size', '256',
+                '-thread_queue_size', '512',
                 '-f', 'rawvideo',
                 '-pix_fmt', 'yuv420p',  # YUV420P ფორმატი
                 '-s', f'{width}x{height}',
                 '-r', str(fps),
                 '-i', '-',  # stdin შემოსვლა
                 '-c:v', 'libx264',
-                '-preset', 'faster',
+                '-preset', 'ultrafast',  # ultrafast ციმციმისთვის
                 '-tune', 'zerolatency',
-                '-profile:v', 'main',
-                '-level', '4.0',
+                '-profile:v', 'baseline',  # baseline კომპატიბილურობისთვის
+                '-level', '3.1',
                 '-pix_fmt', 'yuv420p',
-                '-bf', '0',
-                '-g', str(fps),
+                '-bf', '0',  # B-frames გამორთულია
+                '-g', str(fps * 2),  # 2 წამიანი GOP
                 '-keyint_min', str(fps),
                 '-sc_threshold', '0',
-                '-b:v', '3500k',
-                '-maxrate', '3500k',
-                '-bufsize', '7000k',
-                '-x264opts', 'no-scenecut',
-                '-threads', '1',
+                '-b:v', '2500k',  # უფრო დაბალი bitrate
+                '-maxrate', '2500k',
+                '-bufsize', '5000k',
+                '-x264opts', 'no-scenecut:me=dia:subme=1',
+                '-threads', '2',
                 '-f', 'hls',
                 '-hls_time', str(self.segment_duration),
-                '-hls_list_size', '5',
+                '-hls_list_size', '3',  # უფრო მცირე ლისტი
                 '-hls_flags', 'append_list+program_date_time+delete_segments',
                 '-hls_delete_threshold', '1',
                 '-hls_segment_type', 'mpegts',
@@ -138,6 +138,18 @@ class HLSStreamer:
         try:
             if frame is not None:
                 # BGR → YUV420P კონვერტაცია (სწორი მეთოდი)
+                # ჯერ შევამოწმოთ ფრეიმის ზომები
+                height, width = frame.shape[:2]
+                
+                # დავადგინოთ სწორი YUV420P ზომა (უნდა იყოს 2-ის ჯერადი)
+                yuv_height = height - (height % 2)
+                yuv_width = width - (width % 2)
+                
+                # ფრეიმის ზომის კორექტირება თუ საჭიროა
+                if yuv_height != height or yuv_width != width:
+                    frame = cv2.resize(frame, (yuv_width, yuv_height))
+                
+                # BGR → YUV420P კონვერტაცია
                 yuv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV_I420)
                 self.process.stdin.write(yuv_frame.tobytes())
                 self.process.stdin.flush()

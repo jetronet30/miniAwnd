@@ -34,15 +34,36 @@ class CameraManager:
             self.cap = cv2.VideoCapture(self.camera_url, cv2.CAP_FFMPEG)
             
             if self.cap.isOpened():
-                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, self.buffer_size)
-                self.cap.set(cv2.CAP_PROP_FPS, self.fps)
-                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+                # ჯერ დავაყენოთ ფუნდამენტური პარამეტრები
+                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # მინიმალური ბაფერი
+                self.cap.set(cv2.CAP_PROP_FPS, 15)
                 self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, self.open_timeout)
                 self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, self.read_timeout)
                 
+                # მნიშვნელოვანი: ჯერ წავიკითხოთ ერთი ფრეიმი რეალური რეზოლუციის დასადგენად
+                ret, test_frame = self.cap.read()
+                if ret and test_frame is not None:
+                    # დავადგინოთ კამერის რეალური რეზოლუცია
+                    actual_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                    actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                    actual_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
+                    
+                    print(f"კამერის რეალური პარამეტრები: {actual_width}x{actual_height} @ {actual_fps}fps")
+                    
+                    # თუ მაღალი რეზოლუციაა, დავაყენოთ 720p სტაბილურობისთვის
+                    if actual_width > 1280 or actual_height > 720:
+                        print("მაღალი რეზოლუცია აღმოჩნდა, დაყენება 720p-ზე სტაბილურობისთვის")
+                        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+                        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+                        self.width = 1280
+                        self.height = 720
+                    else:
+                        # შევინარჩუნოთ კამერის რეალური რეზოლუცია
+                        self.width = actual_width
+                        self.height = actual_height
+                
                 self.is_connected = True
-                print("კამერა დაკავშირებულია!")
+                print(f"კამერა დაკავშირებულია! რეზოლუცია: {self.width}x{self.height}")
                 return True
             else:
                 self.is_connected = False

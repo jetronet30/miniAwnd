@@ -27,9 +27,9 @@ logging.getLogger("socketserver").setLevel(logging.WARNING)
 
 model = YOLO("best.pt")
 
-MIN_WIDTH = 250
-MIN_HEIGHT = 50
-MIN_CONFIDENCE = 0.80
+MIN_WIDTH = 400
+MIN_HEIGHT = 100
+MIN_CONFIDENCE = 0.5
 
 SAVE_DIR = "number_sectors"
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -52,7 +52,7 @@ frame_lock = Thread()
 
 def hls_streaming_thread():
     """HLS სტრიმინგის ცალკე thread"""
-    global latest_display_frame, running
+    global latest_display_frame, running, camera_width, camera_height
     
     log.info("🎥 HLS სტრიმინგის thread დაიწყო")
     
@@ -63,11 +63,11 @@ def hls_streaming_thread():
                 if not success:
                     log.warning("❌ HLS ფრეიმის გაგზავნა ჩავარდა")
             else:
-                # თუ კადრი არ არის, გავაგზავნით შავ ეკრანს
-                black_frame = np.zeros((720, 1280, 3), dtype=np.uint8)
+                # თუ კადრი არ არის, გავაგზავნით შავ ეკრანს კამერის რეალური რეზოლუციით
+                black_frame = np.zeros((camera_height, camera_width, 3), dtype=np.uint8)
                 hls_streamer.write_frame(black_frame)
             
-            time.sleep(0.033)  # ~30 FPS
+            time.sleep(0.066)  # ~15 FPS - შეესაბამება HLS სტრიმის FPS-ს
             
         except Exception as e:
             log.error(f"HLS thread შეცდომა: {e}")
@@ -100,7 +100,18 @@ WINDOW_NAME = "YOLO Camera + Detection"
 
 # კამერის მენეჯერის შექმნა
 camera_manager = CameraManager(CAMERA_URL)
-connection_screen = camera_manager.create_connection_screen()
+
+# პირველ რიგში დავაკავშირდეთ კამერას და დავადგინოთ რეზოლუცია
+print("🔗 კამერის დაკავშირება...")
+if camera_manager.connect():
+    # კამერის რეალური რეზოლუციის გამოყენება
+    camera_width = camera_manager.width
+    camera_height = camera_manager.height
+    connection_screen = camera_manager.create_connection_screen()
+else:
+    print("❌ კამერის დაკავშირება ჩავარდა, გამოიყენება ნაგულისხმევი პარამეტრები")
+    camera_width, camera_height = 1280, 720
+    connection_screen = camera_manager.create_connection_screen()
 
 # OpenCV ფანჯრის შექმნა ფიქსური ზომით
 cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
@@ -181,9 +192,25 @@ tcp_client.start()
 print("იწყება. დააჭირე 'q'-ს გასაჩერებლად")
 print(f"HLS სტრიმი ხელმისაწვდომია: {hls_streamer.get_playlist_url()}")
 
-# HLS სტრიმის გაშვება
-stream_started = hls_streamer.start_stream(width=1280, height=720, fps=15)
+# HLS სტრიმის გაშვება - კამერის რეალური რეზოლუციით
+# პირველ რიგში ვიღებთ კამერის რეზოლუციას
+camera_width, camera_height = 1280, 720  # ნაგულისხმევი, შეიცვლება კამერის დაკავშირებისას
+
+try:
+    # კამერის რეზოლუციის ავტომატური დადგენა
+    test_frame, _ = camera_manager.read_frame()
+    if test_frame is not None:
+        camera_height, camera_width = test_frame.shape[:2]
+        log.info(f"🎥 კამერის რეზოლუცია: {camera_width}x{camera_height}")
+    else:
+        log.warning("⚠️ ვერ მოხერხდა კამერის რეზოლუციის დადგენა, გამოიყენება ნაგულისხმევი")
+except Exception as e:
+    log.warning(f"კამერის რეზოლუციის შეცდომა: {e}")
+
+stream_started = hls_streamer.start_stream(width=camera_width, height=camera_height, fps=15)
 print(f"HLS სტრიმის სტატუსი: {stream_started}")
+if stream_started:
+    print(f"🎥 HLS სტრიმი გაშვებულია: {camera_width}x{camera_height} @ 15fps")
 
 # HLS thread-ის გაშვება
 if stream_started:

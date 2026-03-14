@@ -53,8 +53,7 @@ class VideoRecorder:
             return False
 
         self.process_id = process_id
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.current_filename = f"1_{process_id}_{timestamp}.mp4"
+        self.current_filename = f"{process_id}.mp4"
         output_path = os.path.join(self.output_dir, self.current_filename)
 
         ffmpeg_cmd = [

@@ -146,7 +146,7 @@ class HLSHandler(http.server.SimpleHTTPRequestHandler):
             • პლეილისტი: /wagon_stream.m3u8
         </div>
         
-        <video id="videoPlayer" controls autoplay muted>
+        <video id="videoPlayer" controls autoplay muted playsinline>
             <source src="/wagon_stream.m3u8" type="application/vnd.apple.mpegurl">
             თქვენი ბრაუზერი არ უჭერს მხარდაჭერს HLS სტრიმინგს.
         </video>
@@ -193,21 +193,63 @@ class HLSHandler(http.server.SimpleHTTPRequestHandler):
         }});
         
         video.addEventListener('error', function() {{
-            console.log('სტრიმის შეცდომა');
+            console.log('');
         }});
         
-        // HLS.js ბიბლიოთეკის ჩატვირთვა (თუ საჭიროა)
-        if (video.canPlayType('application/vnd.apple.mpegurl') === '') {{
+        // HLS.js 
+        if (video.canPlayType('application/vnd.apple.mpegurl') === ''){{
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
             script.onload = function() {{
                 if (Hls.isSupported()) {{
-                    const hls = new Hls();
+                    const hls = new Hls({{
+                        debug: false,
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                        backBufferLength: 90,
+                        maxBufferLength: 30,
+                        maxMaxBufferLength: 600,
+                        liveSyncDurationCount: 3,
+                        liveMaxLatencyDurationCount: Infinity,
+                        liveDurationInfinity: true,
+                        preferManagedMediaSource: true
+                    }});
+                    
                     hls.loadSource('/wagon_stream.m3u8');
                     hls.attachMedia(video);
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {{
+                        video.play().catch(function(e) {{
+                            console.log('Autoplay :', e);
+                        }});
+                    }});
+                    
+                    hls.on(Hls.Events.ERROR, function(event, data) {{
+                        if (data.fatal) {{
+                            switch(data.type) {{
+                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                    console.log(' , ...');
+                                    hls.startLoad();
+                                    break;
+                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                    console.log(' ...');
+                                    hls.recoverMediaError();
+                                    break;
+                                default:
+                                    console.log(' :', data);
+                                    break;
+                            }}
+                        }}
+                    }});
                 }}
             }};
             document.head.appendChild(script);
+        }} else {{
+            // Safari- 
+            video.load();
+            video.play().catch(function(e) {{
+                console.log('Autoplay :', e);
+            }});
         }}
     </script>
 </body>
