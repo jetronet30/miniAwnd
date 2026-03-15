@@ -3,7 +3,7 @@ import json
 import re
 import torch
 from datetime import datetime
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 import traceback
 from collections import Counter
@@ -183,20 +183,46 @@ class WorkingNumberDetector:
             "wagons": []
         }
 
-        log.info("\n📊 საბოლოო შედეგი (majority vote):")
+        log.info("\n📊 საბოლოო შედეგი:")
+
         for row in sorted(new_wagons.keys()):
             entries = new_wagons[row]
-            numbers = [e["recognized_number"] for e in entries]
+            numbers = [e["recognized_number"] for e in entries if e["recognized_number"]]
 
             if not numbers:
                 continue
 
             counter = Counter(numbers)
-            most_common_num, most_common_count = counter.most_common(1)[0]
-            total = len(numbers)
-            quality_pct = (most_common_count / total) * 100 if total > 0 else 0
+            if not counter:
+                continue
 
-            # საშუალო ნდობა მხოლოდ იმ ჩანაწერებისთვის, რომლებიც შეესაბამება საუკეთესო ნომერს
+            most_common_num, top_count = counter.most_common(1)[0]
+            total = len(numbers)
+
+            # ────────────────────────────────
+            #      გაუმჯობესებული quality
+            # ────────────────────────────────
+            second_count = counter.most_common(2)[1][1] if len(counter) >= 2 else 0
+            gap = top_count - second_count
+            unique = len(counter)
+
+            if top_count == total:
+                quality_score = 98.0
+            elif top_count >= total * 0.80 and top_count >= 4:
+                quality_score = 90.0 + (gap * 2)
+            elif top_count >= total * 0.65 and top_count >= 3:
+                quality_score = 72.0 + (gap * 3)
+            elif top_count >= 3:
+                quality_score = 55.0 + (gap * 4)
+            elif top_count == 2:
+                quality_score = 38.0 + (gap * 5)
+            else:
+                quality_score = 18.0
+
+            # ზედა ზღვარი და მინიმუმი
+            quality_score = max(10.0, min(100.0, quality_score))
+
+            # საშუალო ნდობა მხოლოდ საუკეთესოსთვის
             matching_confidences = [
                 e["confidence"] for e in entries if e["recognized_number"] == most_common_num
             ]
@@ -205,10 +231,14 @@ class WorkingNumberDetector:
             final_results["wagons"].append({
                 "row": row,
                 "number": most_common_num,
-                "quality": f"{quality_pct:.1f}",
+                "quality": f"{quality_score:.1f}",
             })
 
-            log.info(f"რიგი {row:2d}: {most_common_num}  |  {most_common_count}/{total}  ({quality_pct:.1f}%)  |  საშ. ნდობა: {avg_confidence:.3f}")
+            log.info(
+                f"რიგი {row:2d}: {most_common_num}  |  "
+                f"{top_count}/{total}  ({quality_score:.1f})  |  "
+                f"საშ. ნდობა: {avg_confidence:.3f}"
+            )
 
         # ფაილების შენახვა
         try:
@@ -217,7 +247,6 @@ class WorkingNumberDetector:
 
             with open("final_wagons.json", "w", encoding="utf-8") as f:
                 json.dump(final_results, f, ensure_ascii=False, indent=2)
-
 
         except Exception as e:
             log.error(f"ფაილების შენახვის შეცდომა: {e}")
