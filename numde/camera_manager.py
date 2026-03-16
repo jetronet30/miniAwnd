@@ -37,6 +37,8 @@ class CameraManager:
                 # ჯერ დავაყენოთ ფუნდამენტური პარამეტრები
                 self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # მინიმალური ბაფერი
                 self.cap.set(cv2.CAP_PROP_FPS, 15)
+                self.cap.set(cv2.CAP_PROP_EXPOSURE,     -8)    # მნიშვნელობა -13 .. -1 .. 0 .. + სხვადასხვა კამერაზე განსხვავებულია
+                self.cap.set(cv2.CAP_PROP_GAIN,          0)
                 self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, self.open_timeout)
                 self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, self.read_timeout)
                 

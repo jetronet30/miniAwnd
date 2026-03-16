@@ -31,7 +31,7 @@ model = YOLO("best.pt")
 
 MIN_WIDTH = 400
 MIN_HEIGHT = 100
-MIN_CONFIDENCE = 0.5
+MIN_CONFIDENCE = 0.3
 
 SAVE_DIR = "number_sectors"
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -198,9 +198,9 @@ def run_ocr_detector():
         detector = WorkingNumberDetector()
         detector.process_sectors(SAVE_DIR)
         
-        # final_wagons.json ფაილის წაკითხვა
-        if os.path.exists("final_wagons.json"):
-            with open("final_wagons.json", "r", encoding="utf-8") as f:
+        # final_result.json ფაილის წაკითხვა
+        if os.path.exists("final_result.json"):
+            with open("final_result.json", "r", encoding="utf-8") as f:
                 final_results = json.load(f)
             
             # შედეგების გაგზავნა სერვერზე

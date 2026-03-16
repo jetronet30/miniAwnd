@@ -66,7 +66,7 @@ class WorkingNumberDetector:
         return int(match.group(1)) if match else 0
 
     def recognize_number(self, image_path: str) -> str:
-        """ნომრის ამოცნობა TrOCR მოდელით"""
+        """ნომრის ამოცნობა TrOCR მოდელით — მინ. 4 ნიშნა ვაგონებისთვის"""
         if not self.processor or not self.model:
             return "მოდელი_არ_არის"
 
@@ -76,14 +76,12 @@ class WorkingNumberDetector:
             with torch.inference_mode(), torch.no_grad():
                 pixel_values = self.processor(image, return_tensors="pt").pixel_values.to(self.device)
                 generated_ids = self.model.generate(
-                    pixel_values, max_length=10, num_beams=1, early_stopping=True
+                    pixel_values, max_length=12, num_beams=1, early_stopping=True
                 )
                 text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
 
-                # ტექსტის გაწმენდა
                 num = "".join(c for c in text if c.isdigit() or c.isalpha())
                 
-                # ლოკომოტივების დეტექცია
                 is_loco = (
                     text.startswith(("VL", "TE", "TЭM", "T", "V"))
                     or "ЭM" in text.upper() or "YM" in text.upper()
@@ -91,8 +89,10 @@ class WorkingNumberDetector:
 
                 if is_loco:
                     return num
-                if len(num) == 8 and num.isdigit():
+                
+                if len(num) >= 4 and num.isdigit():
                     return num
+                
                 return ""
                 
         except Exception as e:
@@ -100,7 +100,6 @@ class WorkingNumberDetector:
             return "შეცდომა"
 
     def process_sectors(self, sectors_dir: str = "number_sectors"):
-        """სექტორების დამუშავება და შედეგების გენერაცია"""
         if not os.path.exists(sectors_dir):
             log.error(f"❌ დირექტორია არ არსებობს: {sectors_dir}")
             return None
@@ -146,12 +145,11 @@ class WorkingNumberDetector:
             if processed_count % 10 == 0 or processed_count == 1:
                 log.info(f"→ დამუშავებული: {processed_count} | წარმატებული: {success_count}")
 
-        # ლოკომოტივების ამოღება + რიგების გადანომვრა
-        log.info("\n🔄 ლოკომოტივების ამოღება და საბოლოო დამუშავება...")
+        log.info("\n🔄 ლოკომოტივების ამოღება და რიგების გადანომვრა...")
 
-        if not results["wagons"]:
+        if not results.get("wagons"):
             log.info("→ არაფერი დამუშავდა")
-            return
+            return None
 
         sorted_rows = sorted(results["wagons"].keys())
         leading_loco_rows = [
@@ -165,88 +163,87 @@ class WorkingNumberDetector:
         for old_row in sorted_rows:
             if old_row in leading_loco_rows:
                 continue
-
-            clean_entries = [
-                e for e in results["wagons"][old_row]
-                if not e.get("is_locomotive")
-            ]
-
+            clean_entries = [e for e in results["wagons"][old_row] if not e.get("is_locomotive")]
             if clean_entries:
                 new_wagons[new_row_idx] = clean_entries
                 new_row_idx += 1
 
         results["wagons"] = new_wagons
 
-        # საბოლოო შედეგის გენერაცია
+        # ───────────────────────────────────────────────
+        #      საბოლოო შედეგი
+        # ───────────────────────────────────────────────
         final_results = {
-            "total_wagons": len(new_wagons),
+            "total_wagons": 0,  # აქ დავითვლით ბოლოს
             "wagons": []
         }
 
-        log.info("\n📊 საბოლოო შედეგი:")
+        log.info("\n📊 საბოლოო შედეგი (ყველა რიგი):")
 
         for row in sorted(new_wagons.keys()):
             entries = new_wagons[row]
             numbers = [e["recognized_number"] for e in entries if e["recognized_number"]]
 
-            if not numbers:
-                continue
-
-            counter = Counter(numbers)
-            if not counter:
-                continue
-
-            most_common_num, top_count = counter.most_common(1)[0]
-            total = len(numbers)
-
-            # ────────────────────────────────
-            #      გაუმჯობესებული quality
-            # ────────────────────────────────
-            second_count = counter.most_common(2)[1][1] if len(counter) >= 2 else 0
-            gap = top_count - second_count
-            unique = len(counter)
-
-            if top_count == total:
-                quality_score = 98.0
-            elif top_count >= total * 0.80 and top_count >= 4:
-                quality_score = 90.0 + (gap * 2)
-            elif top_count >= total * 0.65 and top_count >= 3:
-                quality_score = 72.0 + (gap * 3)
-            elif top_count >= 3:
-                quality_score = 55.0 + (gap * 4)
-            elif top_count == 2:
-                quality_score = 38.0 + (gap * 5)
-            else:
-                quality_score = 18.0
-
-            # ზედა ზღვარი და მინიმუმი
-            quality_score = max(10.0, min(100.0, quality_score))
-
-            # საშუალო ნდობა მხოლოდ საუკეთესოსთვის
-            matching_confidences = [
-                e["confidence"] for e in entries if e["recognized_number"] == most_common_num
-            ]
-            avg_confidence = sum(matching_confidences) / len(matching_confidences) if matching_confidences else 0
-
-            final_results["wagons"].append({
+            row_result = {
                 "row": row,
-                "number": most_common_num,
-                "quality": f"{quality_score:.1f}",
-            })
+                "number": "",
+                "quality": "0.0"
+            }
 
-            log.info(
-                f"რიგი {row:2d}: {most_common_num}  |  "
-                f"{top_count}/{total}  ({quality_score:.1f})  |  "
-                f"საშ. ნდობა: {avg_confidence:.3f}"
-            )
+            if not numbers:
+                log.info(f"რიგი {row:2d}: — არაფერი ამოცნობილი —")
+            else:
+                counter = Counter(numbers)
+                most_common_num, top_count = counter.most_common(1)[0]
+                total = len(numbers)
+
+                second_count = counter.most_common(2)[1][1] if len(counter) >= 2 else 0
+                gap = top_count - second_count
+
+                if len(most_common_num) == 8 and most_common_num.isdigit():
+                    if top_count == total:
+                        quality_score = 98.0
+                    elif top_count >= total * 0.80 and top_count >= 4:
+                        quality_score = 90.0 + (gap * 2)
+                    elif top_count >= total * 0.65 and top_count >= 3:
+                        quality_score = 72.0 + (gap * 3)
+                    elif top_count >= 3:
+                        quality_score = 55.0 + (gap * 4)
+                    elif top_count == 2:
+                        quality_score = 38.0 + (gap * 5)
+                    else:
+                        quality_score = 18.0
+
+                    quality_score = max(10.0, min(100.0, quality_score))
+
+                    row_result["number"] = most_common_num
+                    row_result["quality"] = f"{quality_score:.1f}"
+
+                    log_line = f"{most_common_num}  |  {top_count}/{total}  ({quality_score:.1f})"
+                else:
+                    log_line = f"არ არის სანდო 8-ნიშნა (ყველაზე ხშირი: {most_common_num} ×{top_count})"
+
+                matching = [e["confidence"] for e in entries if e["recognized_number"] == most_common_num]
+                avg_conf = sum(matching) / len(matching) if matching else 0.0
+
+                log.info(
+                    f"რიგი {row:2d}: {log_line}  |  "
+                    f"საშ. ნდობა: {avg_conf:.3f}"
+                )
+
+            final_results["wagons"].append(row_result)
+
+        final_results["total_wagons"] = len(final_results["wagons"])
 
         # ფაილების შენახვა
         try:
-            with open("detection_results.json", "w", encoding="utf-8") as f:
+            with open("primary_result.json", "w", encoding="utf-8") as f:
                 json.dump(results, f, ensure_ascii=False, indent=2)
 
-            with open("final_wagons.json", "w", encoding="utf-8") as f:
+            with open("final_result.json", "w", encoding="utf-8") as f:
                 json.dump(final_results, f, ensure_ascii=False, indent=2)
+
+            log.info(f"ფინალური ფაილი შენახულია → {final_results['total_wagons']} რიგი (მათ შორის ცარიელებიც)")
 
         except Exception as e:
             log.error(f"ფაილების შენახვის შეცდომა: {e}")
