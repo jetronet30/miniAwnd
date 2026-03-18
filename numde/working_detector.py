@@ -66,7 +66,7 @@ class WorkingNumberDetector:
         return int(match.group(1)) if match else 0
 
     def recognize_number(self, image_path: str) -> str:
-        """ნომრის ამოცნობა TrOCR მოდელით — მინ. 4 ნიშნა ვაგონებისთვის"""
+        """ნომრის ამოცნობა TrOCR მოდელით — მინ. 2 ნიშნა ვაგონებისთვის"""
         if not self.processor or not self.model:
             return "მოდელი_არ_არის"
 
@@ -90,7 +90,7 @@ class WorkingNumberDetector:
                 if is_loco:
                     return num
                 
-                if len(num) >= 4 and num.isdigit():
+                if len(num) >= 2 and num.isdigit():
                     return num
                 
                 return ""
