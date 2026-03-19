@@ -29,9 +29,9 @@ logging.getLogger("socketserver").setLevel(logging.WARNING)
 
 model = YOLO("best.pt")
 
-MIN_WIDTH = 400
-MIN_HEIGHT = 100
-MIN_CONFIDENCE = 0.3
+MIN_WIDTH = 350
+MIN_HEIGHT = 70
+MIN_CONFIDENCE = 0.4
 
 SAVE_DIR = "number_sectors"
 os.makedirs(SAVE_DIR, exist_ok=True)
