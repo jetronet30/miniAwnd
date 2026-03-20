@@ -78,7 +78,7 @@ def hls_streaming_thread():
     log.info("🛑 HLS სტრიმინგის thread დასრულდა")
 
 # HLS სტრიმერის შექმნა - ოპტიმალური პარამეტრებით
-hls_streamer = HLSStreamer(HLS_DIR, segment_duration=2, output_name="wagon_stream")
+hls_streamer = HLSStreamer(HLS_DIR, segment_duration=2, output_name="playlist")
 
 CAMERA_URL = "rtsp://admin:@192.168.1.12:554"
 DETECTION_INTERVAL = 0.1

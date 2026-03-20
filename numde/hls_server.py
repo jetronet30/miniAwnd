@@ -266,7 +266,7 @@ def wait_for_stream():
     log.info("⏳ ველოდები HLS სტრიმის გაშვებას...")
     
     while True:
-        if os.path.exists("hls/wagon_stream.m3u8"):
+        if os.path.exists("hls"+"/playlist.m3u8"):
             log.info("✅ HLS სტრიმი აღმოჩნდა!")
             return True
         
@@ -274,7 +274,7 @@ def wait_for_stream():
 
 def start_server_in_thread():
     """სერვერის გაშვება ცალკე thread-ში"""
-    port = 8080
+    port = 9091
     
     try:
         with socketserver.TCPServer(("", port), HLSHandler) as httpd:
