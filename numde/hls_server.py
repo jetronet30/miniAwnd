@@ -143,11 +143,11 @@ class HLSHandler(http.server.SimpleHTTPRequestHandler):
             • ვიდეო: 1280x720 @ 15fps<br>
             • კოდეკი: H.264<br>
             • სეგმენტები: 2 წამი<br>
-            • პლეილისტი: /wagon_stream.m3u8
+            • პლეილისტი: /playlist.m3u8
         </div>
         
         <video id="videoPlayer" controls autoplay muted playsinline>
-            <source src="/wagon_stream.m3u8" type="application/vnd.apple.mpegurl">
+            <source src="/playlist.m3u8" type="application/vnd.apple.mpegurl">
             თქვენი ბრაუზერი არ უჭერს მხარდაჭერს HLS სტრიმინგს.
         </video>
         
