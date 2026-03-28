@@ -29,7 +29,7 @@ logging.getLogger("socketserver").setLevel(logging.WARNING)
 
 model = YOLO("best.pt")
 
-MIN_WIDTH = 350
+MIN_WIDTH = 300
 MIN_HEIGHT = 70
 MIN_CONFIDENCE = 0.4
 
@@ -85,8 +85,8 @@ DETECTION_INTERVAL = 0.1
 SAVE_EVERY_N_DETECTIONS = 1
 
 # TCP კლიენტის კონფიგურაცია
-TCP_IDENTIFIER = 1
-TCP_HOST = "192.168.1.80"
+TCP_IDENTIFIER = 5
+TCP_HOST = "127.0.0.1"
 TCP_PORT = 45000
 REAL_WAGON_COUNT = 0
 
@@ -238,10 +238,10 @@ try:
 except Exception as e:
     log.warning(f"კამერის რეზოლუციის შეცდომა: {e}")
 
-stream_started = hls_streamer.start_stream(width=camera_width, height=camera_height, fps=15)
+stream_started = hls_streamer.start_stream(width=camera_width, height=camera_height, fps=25)
 print(f"HLS სტრიმის სტატუსი: {stream_started}")
 if stream_started:
-    print(f"🎥 HLS სტრიმი გაშვებულია: {camera_width}x{camera_height} @ 15fps")
+    print(f"🎥 HLS სტრიმი გაშვებულია: {camera_width}x{camera_height} @ 25fps")
 
 # HLS thread-ის გაშვება
 if stream_started:
