@@ -8,6 +8,7 @@ from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 import traceback
 from collections import Counter
 import logging
+import time  # ← დამატებულია დროის გამოსათვლელად
 
 log = logging.getLogger("WORKING_DETECTOR")
 
@@ -126,6 +127,10 @@ class WorkingNumberDetector:
         if not os.path.exists(sectors_dir):
             log.error(f"დირექტორია არ არსებობს: {sectors_dir}")
             return None
+
+        # ==================== დამუშავების დროის დაწყება ====================
+        start_time = time.time()
+        # =================================================================
 
         results = {
             "timestamp": datetime.now().isoformat(),
@@ -270,6 +275,11 @@ class WorkingNumberDetector:
 
         final_results["total_wagons"] = len(final_results["wagons"])
 
+        # ==================== სრული დამუშავების დრო ====================
+        total_time = time.time() - start_time
+        log.info(f"✅ ფაილების დამუშავება დასრულდა | სრული დრო: {total_time:.2f} წამი ({total_time/60:.2f} წუთი)")
+        # =================================================================
+
         try:
             with open("primary_result.json", "w", encoding="utf-8") as f:
                 json.dump(results, f, ensure_ascii=False, indent=2)
@@ -289,5 +299,10 @@ class WorkingNumberDetector:
 
 if __name__ == "__main__":
     log.info("სკრიპტის გაშვება...")
+    script_start_time = time.time()   # სკრიპტის საერთო დრო
+
     detector = WorkingNumberDetector()
     detector.process_sectors()
+
+    total_script_time = time.time() - script_start_time
+    log.info(f"🔥 სკრიპტი სრულად დასრულდა | საერთო დრო: {total_script_time:.2f} წამი ({total_script_time/60:.2f} წუთი)")
