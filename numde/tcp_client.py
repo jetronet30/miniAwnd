@@ -8,6 +8,7 @@ from typing import Optional, Callable
 
 log = logging.getLogger("TCP_CLIENT")
 
+
 class TCPClient:
     def __init__(self, host: str = "127.0.0.1", port: int = 45000, identifier: int = 2):
         self.host = host
@@ -74,7 +75,6 @@ class TCPClient:
                         if not raw:
                             raise ConnectionResetError("Server closed connection")
 
-                        # ერთი შეტყობინება შეიძლება შეიცავდეს რამდენიმე ბრძანებას (ძალიან იშვიათად)
                         for line in raw.splitlines():
                             line = line.strip()
                             if line:
@@ -126,8 +126,7 @@ class TCPClient:
                 log.info(f"Process ID set: {pid}")
             return
 
-
-        # 3. ახალი ფორმატები:  0_START  /  0_STOP/ID=xxx  /  0_STOP/ID=xxx/w_c=5
+        # ====================== START / STOP ======================
         pattern = r'^(\d+)_(START|STOP)(?:/ID=([^/]+))?(?:/(?:W_C|w_c)=(\d+))?$'
         match = re.match(pattern, msg, re.IGNORECASE)
 
@@ -140,27 +139,21 @@ class TCPClient:
                 log.warning(f"Invalid identifier prefix: {target_id_str}")
                 return
 
-            # თუ არ ემთხვევა ჩვენს identifier-ს → გამოვტოვოთ
             if target_id != self.identifier:
-                # log.debug(f"Message for different identifier {target_id} → ignoring")
                 return
 
             enabled = (action == "START")
 
-            # თუ მოცემულია ID → ვამოწმებთ / ვაახლებთ
+            # ID განახლება (თუ მოცემულია)
             if received_id:
                 received_id = received_id.strip()
-                if not received_id:
-                    log.warning("Empty ID in command")
-                    return
+                if received_id:
+                    old_id = self.process_id
+                    self.process_id = received_id
+                    if old_id and old_id != received_id:
+                        log.info(f"Process ID changed: {old_id} → {received_id}")
 
-                old_id = self.process_id
-                self.process_id = received_id
-
-                if old_id and old_id != received_id:
-                    log.info(f"Process ID changed: {old_id} → {received_id}")
-
-            # თუ არის w_c პარამეტრი → განვაახლებთ მხოლოდ STOP-ის დროს (ჩვეულებრივ)
+            # wagon count განახლება STOP-ის დროს
             if wagon_count_str and action == "STOP":
                 try:
                     wc = int(wagon_count_str)
@@ -170,14 +163,34 @@ class TCPClient:
                 except ValueError:
                     log.warning(f"Invalid wagon count: {wagon_count_str}")
 
-            # ბოლოს ვცვლით დეტექციის სტატუსს
             self._set_detection(enabled)
+
             log.info(f"[{self.identifier}] Detection {'ENABLED' if enabled else 'DISABLED'}"
                      f"  (ID: {self.process_id or '?'})")
-
             return
 
-        # თუ არც ერთი ზემოთ არ დამთხვა
+        # ====================== ABORT ======================
+        # მხოლოდ მარტივი ფორმატი: 0_ABORT
+        abort_pattern = r'^(\d+)_ABORT(?:/ID=([^/]+))?$'
+        abort_match = re.match(abort_pattern, msg, re.IGNORECASE)
+
+        if abort_match:
+            target_id_str = abort_match.group(1)
+            try:
+                target_id = int(target_id_str)
+            except:
+                return
+
+            if target_id != self.identifier:
+                return
+
+            # ABORT ზუსტად იგივეს აკეთებს რაც STOP
+            self._set_detection(False)
+            
+            log.info(f"[{self.identifier}] Detection ABORTED by server command")
+            return
+
+        # უცნობი ბრძანება
         log.warning(f"Unknown command format: {original}")
 
     def _set_detection(self, enabled: bool):
@@ -207,10 +220,7 @@ class TCPClient:
 
         try:
             import json
-            # შედეგების JSON-ში გადაყვანა
             results_json = json.dumps(results_data, ensure_ascii=False)
-            
-            # მომზადება: RESULTS_ID=xxxx|JSON_DATA
             message = f"ID={self.process_id}|{results_json}"
             
             self.socket.send(message.encode('utf-8'))
