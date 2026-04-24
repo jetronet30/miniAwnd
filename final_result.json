@@ -3,28 +3,28 @@
   "wagons": [
     {
       "row": 1,
-      "number": "73157158",
-      "quality": "100.0"
+      "number": "66142605",
+      "quality": "98.0"
     },
     {
       "row": 2,
-      "number": "73157034",
-      "quality": "100.0"
+      "number": "62514229",
+      "quality": "98.0"
     },
     {
       "row": 3,
-      "number": "73157141",
-      "quality": "100.0"
+      "number": "66187287",
+      "quality": "98.0"
     },
     {
       "row": 4,
-      "number": "51087823",
-      "quality": "100.0"
+      "number": "62618871",
+      "quality": "87.0"
     },
     {
       "row": 5,
-      "number": "50758978",
-      "quality": "79.0"
+      "number": "62314364",
+      "quality": "100.0"
     }
   ]
 }
